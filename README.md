@@ -45,6 +45,31 @@ Now the same demo hits the real Graph API. Check Events Manager → Test
 Events (with `META_TEST_EVENT_CODE` set) to see the browser + server events
 arrive and collapse into one via `event_id`.
 
+## Deploy to Vercel
+
+The front-end demo (`public/index.html` + `api/purchase.js` + `api/config.js`)
+is Vercel-ready as-is — `api/*.js` deploy as serverless functions, `public/`
+as static assets, `vercel.json` rewrites `/` to `public/index.html`.
+
+```bash
+npx vercel        # first deploy, follow the prompts (link/create a project)
+npx vercel --prod # promote to production URL
+```
+
+Works with zero env vars set (dry-run mode, same as local). To hit the real
+Graph API, set env vars on the Vercel project instead of `.env`:
+
+```bash
+npx vercel env add META_PIXEL_ID
+npx vercel env add META_ACCESS_TOKEN
+npx vercel env add META_TEST_EVENT_CODE
+npx vercel --prod   # redeploy to pick up the new env vars
+```
+
+`server.js` (the local `npm run serve` script) isn't used on Vercel — it's
+plain `node:http`, kept only for running the demo locally without the Vercel
+CLI.
+
 ## Best practices applied here
 
 - **Deduplication** — same `event_id` on browser Pixel + server CAPI event,
