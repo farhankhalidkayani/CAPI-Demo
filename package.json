@@ -1,0 +1,12 @@
+{
+  "name": "meta-capi-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Minimal demonstration of Meta (Facebook) Conversions API",
+  "scripts": {
+    "send": "node examples/send-purchase-event.js",
+    "serve": "node server.js",
+    "test": "node test/test-capi.js"
+  }
+}

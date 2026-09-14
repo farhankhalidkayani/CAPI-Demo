@@ -1,0 +1,64 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8" />
+<title>Meta CAPI Demo — Pixel + Server Dedup</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 3rem auto; line-height: 1.5; }
+  button { font-size: 1rem; padding: 0.6rem 1.2rem; cursor: pointer; }
+  pre { background: #111; color: #0f0; padding: 1rem; overflow-x: auto; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Meta CAPI Demo</h1>
+<p>
+  Clicking the button fires a browser Pixel <code>Purchase</code> event and a
+  server-side Conversions API <code>Purchase</code> event with the
+  <strong>same <code>event_id</code></strong> — this is what Meta uses to
+  deduplicate the two into a single conversion.
+</p>
+<button id="buy">Simulate Purchase ($49.99)</button>
+<pre id="log">(waiting for click)</pre>
+
+<!-- Meta Pixel base code -->
+<script>
+!function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+document,'script','https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '__PIXEL_ID__');
+fbq('track', 'PageView');
+</script>
+
+<script>
+const logEl = document.getElementById("log");
+const log = (msg) => (logEl.textContent = msg);
+
+document.getElementById("buy").addEventListener("click", async () => {
+  const eventId = crypto.randomUUID();
+
+  // 1. Browser Pixel event — eventID ties it to the server event below.
+  fbq("track", "Purchase", { currency: "USD", value: 49.99 }, { eventID: eventId });
+
+  // 2. Server-side Conversions API event, same event_id.
+  log(`Sending event_id ${eventId} ...`);
+  try {
+    const res = await fetch("/api/purchase", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        eventId,
+        email: "customer@example.com",
+        phone: "+15551234567",
+      }),
+    });
+    const json = await res.json();
+    log(`event_id: ${eventId}\n\nServer response:\n${JSON.stringify(json, null, 2)}`);
+  } catch (err) {
+    log(`Error: ${err.message}`);
+  }
+});
+</script>
+</body>
+</html>
